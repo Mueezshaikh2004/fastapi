@@ -1,6 +1,7 @@
 from pydantic import BaseModel
+from typing import Optional
 
-class Company(BaseModel):
+class CompanyCreate(BaseModel):
     name: str
     location: str
     
