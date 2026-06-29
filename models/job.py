@@ -1,6 +1,5 @@
-from unittest.mock import Base
-
-from sqlalchemy import Column, Integer, String, Enum, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey
+from database import Base
 from models.company import Company
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
@@ -13,4 +12,4 @@ class Job(Base):
     description = Column(String)
     salary = Column(Integer)
     company_id = Column(Integer, ForeignKey("company.id"))
-    company = relationship("company", back_populates="jobs")   
+    company = relationship("Company", back_populates="jobs")   

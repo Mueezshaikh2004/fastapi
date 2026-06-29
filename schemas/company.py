@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from typing import Optional
 
+from schemas.job import JobResponse
+
 class CompanyBase(BaseModel):
     name: str
     email:str
@@ -18,5 +20,8 @@ class CompanyUpdate(CompanyBase):
     
 class CompanyResponse(CompanyBase):
     id: int
+    jobs: list[JobResponse] = []
     
-    pass
+    model_config = {
+        "from_attributes": True
+    }
