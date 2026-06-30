@@ -3,15 +3,14 @@ import NavBar from "./components/NavBar";
 import CompanyCard from "./components/CompanyCard";
 import JobCard from "./components/JobCard";
 import Footer from "./components/Footer";
-import { useEffect, useState } from "react";
+import {useEffect,useState} from "react";
 import { getCompanies } from "./Services/CompanyService";
-import type { Company } from "./types/company";
+import type {Company} from "./types/company"
 
-function App() {
-  function App() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [companies, setCompanies] = useState<Company[]>([]);
+function App(){
+  const [loading,setLoading] = useState(true);
+  const [error,setError] = useState<Error | null>(null)
+  const [companies,setCompanies] = useState<Company[]>([]);
 
   async function fetchCompanies() {
     setLoading(true);
@@ -29,21 +28,25 @@ function App() {
     fetchCompanies();
   }, []);
   
+  if(loading){
+    return <div>Loading...</div>
+  }
+
   if(error){
     return <div>Error: {error.message}</div>
   }
-
+  
   return(
     <>
     <NavBar />
     <Welcome />
     <br />
-    <CompanyCard key={companies.id}
-    <companies={companies}/>
+    <CompanyCard key={companies.id} 
+    companies={companies}/>
     <JobCard />
     <Footer />
     </>
-
   )
-  }
 }
+
+export default App

@@ -1,16 +1,48 @@
+import { useEffect, useState } from "react";
 import { getCompanies } from "../Services/CompanyServices";
-import { useEffect, useeffect, useState } from"react";
-import {Company} from "../types/Company";
+import type { Company } from "../types/Company";
 
 function CompanyCard() {
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    const [companies, setCompany] = useState<Company[]>([]);
+  useEffect(() => {
     async function fetchCompanies() {
-        const companies = await getCompanies();
-        setCompanies(companies);
+      try {
+        const data = await getCompanies();
+        setCompanies(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unable to load companies");
+      } finally {
+        setLoading(false);
+      }
     }
-    useEffect(() => {
-        fetchCompanies();
-    },[]);
-    return 
 
+    fetchCompanies();
+  }, []);
+
+  if (loading) {
+    return <div>Loading companies...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
+
+  return (
+    <section>
+      <h2>Companies</h2>
+      {companies.map((company) => (
+        <div key={company.id}>
+          <h3>{company.name}</h3>
+          <p>{company.email}</p>
+          <p>{company.phone}</p>
+          <p>{company.location}</p>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+export default CompanyCard;

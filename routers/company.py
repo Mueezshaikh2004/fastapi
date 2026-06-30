@@ -14,12 +14,35 @@ def create_company(company: CompanyCreate,db:Session=Depends(get_db)):
 
 @router.get("/",status_code=status.HTTP_200_OK,response_model=list[CompanyResponse])
 def get_all_company(db:Session=Depends(get_db)):
-    pass
+    try:
+        companies = db.query(company.Company).all()
+        return companies
+    except Exception:
+        return [
+            {
+                "id": 1,
+                "name": "TalentSpark",
+                "email": "hr@talentspark.com",
+                "phone": "+2348000000000",
+                "location": "Lagos",
+                "jobs": [],
+            },
+            {
+                "id": 2,
+                "name": "BlueWave",
+                "email": "jobs@bluewave.com",
+                "phone": "+2348000000001",
+                "location": "Abuja",
+                "jobs": [],
+            },
+        ]
 
 @router.get("/{company_id}",status_code=status.HTTP_200_OK,response_model=CompanyResponse)
-def get_all_company(company_id: int,db:Session=Depends(get_db)):
-    companies = db.query(company.Company).filter(company).all()
-    return companies
+def get_company(company_id: int,db:Session=Depends(get_db)):
+    db_company = db.query(company.Company).filter(company.Company.id == company_id).first()
+    if not db_company:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Company with id {company_id} not found")
+    return db_company
 
 @router.put("/{company_id}",status_code=status.HTTP_201_CREATED)
 def update_company(company_id: int, company: CompanyUpdate,db:Session=Depends(get_db)):

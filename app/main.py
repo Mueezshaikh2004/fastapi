@@ -1,25 +1,48 @@
+import os
 from fastapi import FastAPI
-from database import engine,Base
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from dotenv import load_dotenv
+from routes.auth_routes import router as auth_router
+from routes.decks_routes import router as decks_router
+from routes.ai_routes import router as ai_router
+from routes.test_routes import router as test_router
+from routes.dashboard_routes import router as dashboard_router
+from routes.history_routes import router as history_router
+import uvicorn
 
-from routers import company,job
-from models import company as company_model,job as job_model,job as job_model
+load_dotenv()
 
 app = FastAPI()
-print(engine)
-
-#Base.metadata.create_all(bind=engine)
-
-app.include_router(company.router)
-app.include_router(job.router)
 
 @app.get("/")
-def read_root():
-    return {"Hello": "World"}
+def root():
+    return "Hello World"
 
-@app.get("/about")
-def read_about():
-    return {"about": "This is the about page"}
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.get("/contact")
-def read_contact():
-    return {"contact": "This is the contact page"}
+app.include_router(auth_router)
+app.include_router(decks_router)
+app.include_router(ai_router)
+app.include_router(test_router)
+app.include_router(dashboard_router)
+app.include_router(history_router)
+
+# Serve static uploaded files
+# app.mount("/static", StaticFiles(directory="static"), name="static")
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+    )
