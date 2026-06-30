@@ -1,10 +1,16 @@
-function CompanyCard() {
-    return(
-        <div>
-            <h1>Google</h1>
-            <p>Welcome to Google</p>
-        </div>
-    )
-}
+import { getCompanies } from "../Services/CompanyServices";
+import { useEffect, useeffect, useState } from"react";
+import {Company} from "../types/Company";
 
-export default CompanyCard
+function CompanyCard() {
+
+    const [companies, setCompany] = useState<Company[]>([]);
+    async function fetchCompanies() {
+        const companies = await getCompanies();
+        setCompanies(companies);
+    }
+    useEffect(() => {
+        fetchCompanies();
+    },[]);
+    return 
+
