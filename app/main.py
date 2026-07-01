@@ -1,26 +1,12 @@
-import os
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from dotenv import load_dotenv
-from routes.auth_routes import router as auth_router
-from routes.decks_routes import router as decks_router
-from routes.ai_routes import router as ai_router
-from routes.test_routes import router as test_router
-from routes.dashboard_routes import router as dashboard_router
-from routes.history_routes import router as history_router
-import uvicorn
+from routers import company,job,auth
+from database import Base,engine
+from models import job as job_model,company as company_model,users as user_model
 
-load_dotenv()
+from fastapi.middleware.cors import CORSMiddleware
+
 
 app = FastAPI()
-
-@app.get("/")
-def root():
-    return "Hello World"
-
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -28,21 +14,25 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Base.metadata.create_all(bind=engine)
+app.include_router(auth.router)
+app.include_router(company.router)
+app.include_router(job.router)
 
-app.include_router(auth_router)
-app.include_router(decks_router)
-app.include_router(ai_router)
-app.include_router(test_router)
-app.include_router(dashboard_router)
-app.include_router(history_router)
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
 
-# Serve static uploaded files
-# app.mount("/static", StaticFiles(directory="static"), name="static")
+@app.get("/about")
+def read_about():
+    return {"about": "This is about page"}
 
-if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-    )
+@app.get("/contact")
+def read_contact():
+    return {"contact": "This is contact page"}
+#  Albattrosdip
+# steps---> 
+#  1.postgres drivers
+# 2.servers
+# 3. registration -> enterprise db->first two options
+# student_db>database>schemas>tables>right click>query tool
