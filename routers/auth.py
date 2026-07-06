@@ -4,6 +4,7 @@ from models.users import User
 from schemas.users import UserCreate, UserResponse
 from database import get_db
 from utils.security import hash_password, verify_password
+from utils.token import create_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -26,4 +27,5 @@ def login_user(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Invalid credentials")
     if not verify_password(user.password, existing_user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    return existing_user
+    access_token = create_access_token(data={"sub":str(existing_user.id),"role":existing_user.role})
+    return {"token": access_token, "token_type": "bearer"}
