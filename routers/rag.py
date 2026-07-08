@@ -10,7 +10,7 @@ from schemas.rag import (
 )
 from services.resume_service import analyse_resume
 from services.qdrant_service import embed_all_jobs, search_jobs, match_jobs_for_profile
-from services.rag_service import rag_job_search
+from services.rag_services import rag_job_search
 
 router = APIRouter(prefix="/rag", tags=["RAG"])
 

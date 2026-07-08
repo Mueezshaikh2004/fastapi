@@ -1,8 +1,15 @@
 import os
 from dotenv import load_dotenv
-from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
-from fastembed import TextEmbedding
+try:
+    from qdrant_client import QdrantClient
+    from qdrant_client.models import Distance, VectorParams, PointStruct
+    from fastembed import TextEmbedding
+except ModuleNotFoundError:
+    QdrantClient = None
+    Distance = None
+    VectorParams = None
+    PointStruct = None
+    TextEmbedding = None
 from sqlalchemy.orm import Session
 from models.job import Job
 
@@ -11,16 +18,22 @@ load_dotenv()
 COLLECTION_NAME = "job_descriptions"
 VECTOR_SIZE = 384  # BAAI/bge-small-en-v1.5 outputs 384-dim vectors
 
-qdrant = QdrantClient(
-    url=os.getenv("QDRANT_URL"),
-    api_key=os.getenv("QDRANT_API_KEY"),
-)
+qdrant = None
+embeddings_model = None
 
-# Free embedding model — no API key needed, lightweight (no PyTorch)
-embeddings_model = TextEmbedding("BAAI/bge-small-en-v1.5")
+if QdrantClient is not None and TextEmbedding is not None:
+    qdrant = QdrantClient(
+        url=os.getenv("QDRANT_URL"),
+        api_key=os.getenv("QDRANT_API_KEY"),
+    )
+
+    embeddings_model = TextEmbedding("BAAI/bge-small-en-v1.5")
 
 
 def ensure_collection():
+    if qdrant is None or VectorParams is None or Distance is None:
+        return
+
     collections = [c.name for c in qdrant.get_collections().collections]
     if COLLECTION_NAME in collections:
         # Delete old collection if vector size changed (e.g. switched embedding model)
@@ -37,11 +50,16 @@ def ensure_collection():
 
 
 def embed_text(text: str) -> list[float]:
+    if embeddings_model is None:
+        raise RuntimeError("Embedding service unavailable because qdrant-client or fastembed is not installed.")
     return next(embeddings_model.embed([text])).tolist()
 
 
 def embed_all_jobs(db: Session) -> int:
     ensure_collection()
+    if qdrant is None or PointStruct is None:
+        return 0
+
     jobs = db.query(Job).all()
     if not jobs:
         return 0
@@ -49,7 +67,10 @@ def embed_all_jobs(db: Session) -> int:
     points = []
     for job in jobs:
         text = f"{job.title} {job.description or ''}"
-        vector = embed_text(text)
+        try:
+            vector = embed_text(text)
+        except RuntimeError:
+            return 0
         points.append(
             PointStruct(
                 id=job.id,
@@ -62,8 +83,13 @@ def embed_all_jobs(db: Session) -> int:
     return len(points)
 
 def search_jobs(query: str, top_k: int = 5) -> list[dict]:
+    if qdrant is None:
+        return []
     ensure_collection()
-    query_vector = embed_text(query)
+    try:
+        query_vector = embed_text(query)
+    except RuntimeError:
+        return []
     results = qdrant.query_points(
         collection_name=COLLECTION_NAME,
         query=query_vector,
@@ -82,9 +108,14 @@ def search_jobs(query: str, top_k: int = 5) -> list[dict]:
 
 
 def match_jobs_for_profile(skills: str, experience: str, top_k: int = 5) -> list[dict]:
+    if qdrant is None:
+        return []
     ensure_collection()
     profile_text = f"Skills: {skills}. Experience: {experience}"
-    profile_vector = embed_text(profile_text)
+    try:
+        profile_vector = embed_text(profile_text)
+    except RuntimeError:
+        return []
     results = qdrant.query_points(
         collection_name=COLLECTION_NAME,
         query=profile_vector,
